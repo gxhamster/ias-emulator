@@ -19,7 +19,7 @@ class Machine {
         this.accumulator = { value: 0x0, data: new FullWord() };
         this.multiplyQuotientRegister = 0x0;
         this.memoryAddressRegister = 0x0;
-        this.memoryBufferRegister = new FullWord();
+        this.memoryBufferRegister = new FullWord(0, 0, 0, 0);
         this.instructionRegister = 0x0;
         this.instructionBufferRegister = { op: 0, addr: 0 };
         this.memory = new Array(MEMORY_LIMIT);
@@ -53,6 +53,8 @@ class Machine {
             this.memoryAddressRegister = this.programCounter;
             // Access memory location at MAR
             this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
+            if (this.memoryBufferRegister == undefined)
+                throw new Error("Memory access returned undefined");
             const { lop, laddr, raddr, rop } = this.memoryBufferRegister;
             if (lop == 0 && laddr == 0) {
                 // Only right word is being used
@@ -287,4 +289,3 @@ machine.memory[5] = new FullWord(0, 4);
 machine.memory[3] = new FullWord(0, 2);
 const instructions = [new FullWord(1, 5), new FullWord(6, 3)];
 machine.loadInstructionsToMemory(instructions);
-machine.fetch();

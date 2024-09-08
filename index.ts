@@ -15,10 +15,10 @@ interface Accumulator {
 }
 
 class FullWord {
-  lop: number; // 8 bits
-  laddr: number; // 12 bits
-  rop: number; // 8 bits
-  raddr: number; // 12 bits
+  public lop: number; // 8 bits
+  public laddr: number; // 12 bits
+  public rop: number; // 8 bits
+  public raddr: number; // 12 bits
 
   constructor(
     rop: number = 0,
@@ -38,17 +38,17 @@ class FullWord {
 
 class Machine {
   // accumulator: FullWord;
-  accumulator: Accumulator; // FullWord but to do arithmetic
-  multiplyQuotientRegister: number;
-  memoryAddressRegister: number;
-  memoryBufferRegister: FullWord;
-  programCounter: number;
-  instructionRegister: number;
-  instructionBufferRegister: Word;
+  private accumulator: Accumulator; // FullWord but to do arithmetic
+  private multiplyQuotientRegister: number;
+  private memoryAddressRegister: number;
+  private memoryBufferRegister: FullWord;
+  private programCounter: number;
+  private instructionRegister: number;
+  private instructionBufferRegister: Word;
   // How many clock cycles has passed. Used to increment the PC
-  clock: number;
+  private clock: number;
   // Program starting address. For now we can just set to 0x0
-  baseAddress: number;
+  private baseAddress: number;
 
   memory: Array<FullWord>;
 
@@ -57,7 +57,7 @@ class Machine {
     this.accumulator = { value: 0x0, data: new FullWord() }
     this.multiplyQuotientRegister = 0x0;
     this.memoryAddressRegister = 0x0;
-    this.memoryBufferRegister = new FullWord();
+    this.memoryBufferRegister = new FullWord(0,0,0,0);
     this.instructionRegister = 0x0;
     this.instructionBufferRegister = { op: 0, addr: 0 };
     this.memory = new Array(MEMORY_LIMIT);
@@ -95,6 +95,8 @@ class Machine {
       this.memoryAddressRegister = this.programCounter;
       // Access memory location at MAR
       this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
+      if (this.memoryBufferRegister == undefined)
+        throw new Error("Memory access returned undefined")
       const { lop, laddr, raddr, rop } = this.memoryBufferRegister;
       if (lop == 0 && laddr == 0) {
         // Only right word is being used
@@ -169,6 +171,8 @@ class Machine {
       case 33:
         this.store();
         break;
+      default:
+        throw new Error("Unidentified instruction code. Exiting!")
     }
   }
 
@@ -337,19 +341,6 @@ function binaryToWord(binary: number) {
   return new FullWord(rop, raddr, lop, laddr);
 }
 
-// function is2sComplement(binary: number) {
-//     let original = binary;
-//   // Check the MSB
-//   let msb = (1 << 39);
-//   msb &= binary; 
-//   if (msb) {
-//     binary = ~binary;
-//     binary |= 1;
-//     return binary == original;
-//   } else {
-//     return false;
-//   }
-// }
 
 // Instructions are always read from right first.
 const machine = new Machine();
@@ -358,4 +349,3 @@ machine.memory[5] = new FullWord(0, 4);
 machine.memory[3] = new FullWord(0, 2);
 const instructions = [new FullWord(1, 5), new FullWord(6, 3)];
 machine.loadInstructionsToMemory(instructions);
-machine.fetch();
