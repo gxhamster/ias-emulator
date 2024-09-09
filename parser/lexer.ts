@@ -1,6 +1,6 @@
 
 export enum TokenType {
-    // Instructions
+    // Instruction tokens
     LOAD,
     STOR,
     JUMP,
@@ -30,7 +30,7 @@ export enum TokenType {
 
 export interface Token {
     lexeme: string;
-    // Lines start from 1 not zero
+    // Lines start from 0
     line: number;
     tokenType: TokenType
 }
@@ -40,7 +40,7 @@ export class Scanner {
     public source: string = ""
     public _tokens: Array<Token> = new Array();
     private lines: Array<string> = new Array();
-    private line: number = 1;
+    private line: number = 0;
 
     constructor(source: string) {
         this.source = source;
@@ -54,8 +54,8 @@ export class Scanner {
     // Scans per line for instruction and its operands
     scanTokens() {
         
-        while (this.line <= this.lines.length) {
-            const splitStr = this.lines[this.line - 1].split(" ");
+        while (this.line < this.lines.length) {
+            const splitStr = this.lines[this.line].split(" ");
             const instruction = splitStr[0]
             // Create tokens for instruction code
             switch (instruction) {
