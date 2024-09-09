@@ -90,7 +90,7 @@ export class Scanner {
                     this.addToken(TokenType.RSH, "RSH");
                     break;
                 default:
-                    throw new Error("Unrecognized instruction opcode. Exiting!")
+                    throw new Error(`Unrecognized instruction opcode. Instruction: ${instruction}`)
             }
             
             // Create tokens for the extra operands (symbols, numbers, registers)
