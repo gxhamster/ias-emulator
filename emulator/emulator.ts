@@ -140,7 +140,7 @@ export class Machine {
         this.loadToMQFromMemory();
         break;
       case 10:
-        this.loadToMQ()
+        this.loadFromMQ()
         break;
       case 11:
         this.mul();
@@ -212,7 +212,7 @@ export class Machine {
   }
 
   // LOAD MQ: Transfer contents of register MQ to the accumulator AC
-  loadToMQ() {
+  loadFromMQ() {
     this.accumulator.value = this.multiplyQuotientRegister;
     this.accumulator.data = binaryToWord(this.multiplyQuotientRegister);
   }
