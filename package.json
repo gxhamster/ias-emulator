@@ -1,12 +1,13 @@
 {
+  "name": "ias-emulator",
+  "module": "index.ts",
   "scripts": {
-    "build": "npx tsc",
-    "test": "mocha"
+    "dev": "bun --watch run index.ts",
+    "build": "bun run index.ts"
   },
   "type": "module",
   "devDependencies": {
-    "@types/mocha": "^10.0.7",
-    "mocha": "^10.7.3",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "@types/bun": "latest"
   }
 }
