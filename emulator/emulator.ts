@@ -65,7 +65,10 @@ export class Machine {
     this.programCounter = this.baseAddress; // Memory goes to 1023 therefore 10 bits PC
     this.clock = 0;
 
-    this.memory = this.memory.fill(new Instruction(0,0,0,0));
+    for (let i = 0; i < this.memory.length; i++) {
+      this.memory[i] = new Instruction(0,0,0,0);
+    }
+
   }
 
   public getRegisterValues() {
@@ -305,14 +308,16 @@ export class Machine {
   leftAddressModify() {
     // STOR M(X,8:19) Replace left address field at M(X) by 12 rightmost bits of AC
     const storingAddr = this.memoryAddressRegister;
-    this.memory[storingAddr].laddr = this.accumulator.data.raddr; 
+    this.memoryBufferRegister = this.accumulator.data;
+    this.memory[storingAddr].laddr = this.memoryBufferRegister.raddr
 
   }
 
   rightAddressModify() {
     // STOR M(X,28:39) Replace right address field at M(X) by 12 rightmost bits of AC
     const storingAddr = this.memoryAddressRegister;
-    this.memory[storingAddr].raddr = this.accumulator.data.raddr; 
+    this.memoryBufferRegister = this.accumulator.data;
+    this.memory[storingAddr].raddr = this.memoryBufferRegister.raddr
   }
 
   jumpToLeftAddr() {
