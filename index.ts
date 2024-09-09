@@ -1,20 +1,20 @@
 // Main file
-const MEMORY_LIMIT = 1024;
+export let MEMORY_LIMIT = 1024;
 
 // One word is equal to 20 bits. One full instruction is two words in memory
-interface Word {
+export interface Word {
   op: number;
   addr: number;
 }
 
 // Structure to keep both value in the full word
 // and the individual values in the each location
-interface Accumulator {
+export interface Accumulator {
   value: number;
   data: FullWord;
 }
 
-class FullWord {
+export class FullWord {
   public lop: number; // 8 bits
   public laddr: number; // 12 bits
   public rop: number; // 8 bits
@@ -36,8 +36,7 @@ class FullWord {
   }
 }
 
-class Machine {
-  // accumulator: FullWord;
+export class Machine {
   private accumulator: Accumulator; // FullWord but to do arithmetic
   private multiplyQuotientRegister: number;
   private memoryAddressRegister: number;
@@ -51,6 +50,7 @@ class Machine {
   private baseAddress: number;
 
   memory: Array<FullWord>;
+
 
   constructor() {
     // this.accumulator = new FullWord();
@@ -76,11 +76,15 @@ class Machine {
 
   // Start reading instructions
   loadInstructionsToMemory(instructions: Array<FullWord>) {
-    for (let i = 0; i < instructions.length; i++) {
+    // Copy all the instructions to memory. Start from the base address
+    for (let i = this.baseAddress; i < instructions.length; i++) {
       this.memory[i] = instructions[i];
     }
-    for (let i = 0; i < instructions.length; i++)
+    // Start fetch/excecute cycle
+    for (; this.clock < instructions.length; this.clock++)
       this.fetch();
+
+    console.log("AC:", this.accumulator.value, "PC:",this.programCounter)
   }
 
 
@@ -181,6 +185,7 @@ class Machine {
     const addrOffset = this.baseAddress + this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
   loadNegativeOffset() {
@@ -189,6 +194,7 @@ class Machine {
     const addrOffset = this.baseAddress - this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
   // TODO: Need to check whether 2s complement
@@ -196,6 +202,7 @@ class Machine {
     // LOAD |M(X)|
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     const value = fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.data = binaryToWord(this.accumulator.value);
 
   }
 

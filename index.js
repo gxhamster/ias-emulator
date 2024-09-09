@@ -1,7 +1,6 @@
-"use strict";
 // Main file
-const MEMORY_LIMIT = 1024;
-class FullWord {
+export let MEMORY_LIMIT = 1024;
+export class FullWord {
     constructor(rop = 0, raddr = 0, lop = 0, laddr = 0) {
         if (rop > 255 || lop > 255)
             throw new Error("Exceeded opcode length!");
@@ -13,7 +12,7 @@ class FullWord {
         this.laddr = laddr;
     }
 }
-class Machine {
+export class Machine {
     constructor() {
         // this.accumulator = new FullWord();
         this.accumulator = { value: 0x0, data: new FullWord() };
@@ -35,11 +34,14 @@ class Machine {
     }
     // Start reading instructions
     loadInstructionsToMemory(instructions) {
-        for (let i = 0; i < instructions.length; i++) {
+        // Copy all the instructions to memory. Start from the base address
+        for (let i = this.baseAddress; i < instructions.length; i++) {
             this.memory[i] = instructions[i];
         }
-        for (let i = 0; i < instructions.length; i++)
+        // Start fetch/excecute cycle
+        for (; this.clock < instructions.length; this.clock++)
             this.fetch();
+        console.log("AC:", this.accumulator.value, "PC:", this.programCounter);
     }
     fetch() {
         if (this.instructionBufferRegister.op > 0) {
@@ -128,6 +130,8 @@ class Machine {
             case 33:
                 this.store();
                 break;
+            default:
+                throw new Error("Unidentified instruction code. Exiting!");
         }
     }
     loadPostiveOffset() {
@@ -135,6 +139,7 @@ class Machine {
         const addrOffset = this.baseAddress + this.memoryAddressRegister;
         this.memoryBufferRegister = this.memory[addrOffset];
         this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
+        this.accumulator.data = binaryToWord(this.accumulator.value);
     }
     loadNegativeOffset() {
         // LOAD -M(X): This instruction means that instead of going forward from the base address.
@@ -142,12 +147,14 @@ class Machine {
         const addrOffset = this.baseAddress - this.memoryAddressRegister;
         this.memoryBufferRegister = this.memory[addrOffset];
         this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
+        this.accumulator.data = binaryToWord(this.accumulator.value);
     }
     // TODO: Need to check whether 2s complement
     loadAbsolute() {
         // LOAD |M(X)|
         this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
         const value = fullWordToBinary(this.memoryBufferRegister);
+        this.accumulator.data = binaryToWord(this.accumulator.value);
     }
     loadToMQFromMemory() {
         this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
@@ -269,19 +276,6 @@ function binaryToWord(binary) {
     const raddr = binary & 0x0000000FFF;
     return new FullWord(rop, raddr, lop, laddr);
 }
-// function is2sComplement(binary: number) {
-//     let original = binary;
-//   // Check the MSB
-//   let msb = (1 << 39);
-//   msb &= binary; 
-//   if (msb) {
-//     binary = ~binary;
-//     binary |= 1;
-//     return binary == original;
-//   } else {
-//     return false;
-//   }
-// }
 // Instructions are always read from right first.
 const machine = new Machine();
 // 00000001 000000000101
