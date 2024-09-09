@@ -36,6 +36,7 @@ export class Parser {
                 const base10 = parseInt(tokens[i].lexeme, 16);
                 if (!Number.isNaN(base10)) {
                     tokens[i].lexeme = base10.toString()
+                    tokens[i].tokenType = TokenType.MEMORY_ADDRESS_DEC;
                 } else {
                     throw new Error(`Error occured during address translation to base10, Token: ${tokens[i]}`)
                 }
@@ -95,9 +96,16 @@ export class Parser {
                 const addr = this.getAddressFromInstructionTokens(curTokens)
                 this.addInstruction(new Instruction(Opcode.JUMP_RIGHT, addr));
             } else if (this.matchTokens(curTokens, STOR_REPLACE_LEFT)) {
-                this.addInstruction(new Instruction(Opcode.LEFT_ADDR_MODIFY));
-            } else if (this.matchTokens(curTokens, STOR_REPLACE_RIGHT)) {
-                this.addInstruction(new Instruction(Opcode.RIGHT_ADDR_MODIFY));
+                // Handle the replace address side
+                if (this.isAddressHintRight(curTokens)) {
+                    // Run STOR M(X,28:39) -> RIGHT
+                    const addr = this.getAddressFromInstructionTokens(curTokens)
+                    this.addInstruction(new Instruction(Opcode.RIGHT_ADDR_MODIFY, addr));
+                } else {
+                    // Otherwise STOR M(X,8:19) -> LEFT
+                    const addr = this.getAddressFromInstructionTokens(curTokens)
+                    this.addInstruction(new Instruction(Opcode.LEFT_ADDR_MODIFY, addr));
+                }
             } else if (this.matchTokens(curTokens, LSH)) {
                 this.addInstruction(new Instruction(Opcode.LSH));
             } else if (this.matchTokens(curTokens, RSH)) {
@@ -151,5 +159,20 @@ export class Parser {
         }
 
         return true
+    }
+
+    // STOR M(X,8:19) in a instruction like that get the 8:19 part.
+    // 8:19 is left address portion and 28:39 is right address portion
+    private isAddressHintRight(source: Token[]) {
+        for (let i = 0; i < source.length; i++) {
+            const curTok = source[i];
+            if (curTok.tokenType === TokenType.COLON) {
+                if (source[i-1].lexeme === "8" && source[i+1].lexeme === "19") {
+                    return false;
+                } else if (source[i-1].lexeme === "28" && source[i+1].lexeme === "39") {
+                    return true
+                }
+            }
+        }
     }
 }
