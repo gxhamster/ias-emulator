@@ -138,6 +138,11 @@ export class Machine {
         this.instructionRegister = rop;
         this.memoryAddressRegister = raddr;
         this.programCounter++;
+      } else if (rop == 0 && raddr == 0) {
+        // Only left word is being used
+        this.instructionRegister = lop;
+        this.memoryAddressRegister = laddr;
+        this.programCounter++;
       } else {
         // If two words are utilized in the instruction we need to put the second instruction too
         this.instructionBufferRegister = { op: rop, addr: raddr };
@@ -207,7 +212,7 @@ export class Machine {
         this.store();
         break;
       default:
-        throw new Error("Unidentified instruction code. Exiting!")
+        throw new Error(`Unidentified instruction code. Instruction: ${this.instructionRegister}`)
     }
   }
 
@@ -300,6 +305,7 @@ export class Machine {
 
   store() {
     // STOR M(X)
+    // TODO: Check width and size of the value to store. If cannot fit.
     const storingAddr = this.memoryAddressRegister;
     this.memoryBufferRegister = this.accumulator.data;
     this.memory[storingAddr] = this.memoryBufferRegister;

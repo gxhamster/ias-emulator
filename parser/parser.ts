@@ -104,7 +104,7 @@ export class Parser {
                 } else {
                     // Otherwise STOR M(X,8:19) -> LEFT
                     const addr = this.getAddressFromInstructionTokens(curTokens)
-                    this.addInstruction(new Instruction(Opcode.LEFT_ADDR_MODIFY, addr));
+                    this.addInstruction(new Instruction(0, 0, Opcode.LEFT_ADDR_MODIFY, addr));
                 }
             } else if (this.matchTokens(curTokens, LSH)) {
                 this.addInstruction(new Instruction(Opcode.LSH));
