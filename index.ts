@@ -1,21 +1,20 @@
 import { Machine, Instruction } from "./emulator/emulator";
 import {Scanner} from "./parser/lexer"
+import { Parser } from "./parser/parser";
 
-// Instructions are always read from right first.
-const machine = new Machine();
-// 00000001 000000000101
-machine.memory[5] = new Instruction(0, 4);
-machine.memory[3] = new Instruction(0, 2);
-const instructions = [new Instruction(1, 5), new Instruction(6, 3)];
-machine.loadInstructionsToMemory(instructions);
-
-
-const example_instruction = `
-LOAD M(5)
-LOAD -M(5)
-LOAD |M(5)|
-LOAD -|M(0xfff)|
+const example_instruction = `LOAD M(5)
+SUB M(3)
 `
+// Instructions are always read from right first.
 const scanner = new Scanner(example_instruction);
 scanner.scanTokens()
-console.log(scanner._tokens)
+const tokens = scanner.tokens;
+const parser = new Parser(tokens);
+parser.parse();
+const instructions = parser.instructions;
+
+const machine = new Machine();
+machine.memory[5] = new Instruction(0, 100);
+machine.memory[3] = new Instruction(0, 94);
+machine.loadInstructionsToMemory(instructions);
+

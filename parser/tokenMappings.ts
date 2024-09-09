@@ -1,13 +1,12 @@
 import { Scanner} from "./lexer"
 
-
 export const LOAD_FROM_MQ = generateReferenceTokens("LOAD MQ");
 export const LOAD_TO_MQ = generateReferenceTokens("LOAD MQ,M(1)");
 export const STOR_TO_MEMORY = generateReferenceTokens("STOR M(1)");
-export const LOAD_FROM_MEMORY = generateReferenceTokens("LOAD M(X)");
-export const LOAD_FROM_MEMORY_NEG_OFF = generateReferenceTokens("LOAD -M(X)");
-export const LOAD_FROM_MEMORY_ABS = generateReferenceTokens("LOAD |M(X)|");
-export const LOAD_FROM_MEMORY_ABS_NEG_OFF = generateReferenceTokens("LOAD -|M(X)|");
+export const LOAD_FROM_MEMORY = generateReferenceTokens("LOAD M(1)");
+export const LOAD_FROM_MEMORY_NEG_OFF = generateReferenceTokens("LOAD -M(1)");
+export const LOAD_FROM_MEMORY_ABS = generateReferenceTokens("LOAD |M(1)|");
+export const LOAD_FROM_MEMORY_ABS_NEG_OFF = generateReferenceTokens("LOAD -|M(1)|");
 export const JUMP_LEFT = generateReferenceTokens("JUMP M(1, 0:19)");
 export const JUMP_RIGHT = generateReferenceTokens("JUMP M(1,20:39)");
 export const JUMP_COND_LEFT = generateReferenceTokens("JUMP+ M(1,0:19)");

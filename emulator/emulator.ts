@@ -64,18 +64,46 @@ export class Machine {
     this.baseAddress = 0x0;
     this.programCounter = this.baseAddress; // Memory goes to 1023 therefore 10 bits PC
     this.clock = 0;
+
+    this.memory = this.memory.fill(new Instruction(0,0,0,0));
   }
 
-  showAccumulator() {
+  public getRegisterValues() {
+    return {
+      accumulator: this.accumulator.value,
+      multiplyQuotientRegister: this.multiplyQuotientRegister,
+      memoryAddressRegister: this.memoryAddressRegister,
+      memoryBufferRegister: this.memoryBufferRegister,
+      instructionRegister: this.instructionRegister,
+      instructionBufferRegister: this.instructionBufferRegister,
+      programCounter: this.programCounter
+    }
+  }
+
+  public getMemoryByRange(lower: number = 0, higher: number) {
+    if (lower > higher)
+      return;
+    if (higher > MEMORY_LIMIT + 1)
+      return
+
+    return this.memory.slice(lower, higher+1).map((ins, idx) => {
+      return {
+        location: lower + idx,
+        ...ins,
+      }
+    });
+  }
+
+  public showAccumulator() {
     console.log("[Accumulator]:" + this.accumulator);
   }
 
-  showMultiplyQuotientRegister() {
+  public showMultiplyQuotientRegister() {
     console.log("[MQ]:" + this.multiplyQuotientRegister);
   }
 
   // Start reading instructions
-  loadInstructionsToMemory(instructions: Array<Instruction>) {
+  public loadInstructionsToMemory(instructions: Array<Instruction>) {
     // Copy all the instructions to memory. Start from the base address
     for (let i = this.baseAddress; i < instructions.length; i++) {
       this.memory[i] = instructions[i];
@@ -88,7 +116,7 @@ export class Machine {
   }
 
 
-  fetch() {
+  private fetch() {
     if (this.instructionBufferRegister.op > 0) {
       // No need to access memory
       this.instructionRegister = this.instructionBufferRegister.op;
@@ -118,7 +146,7 @@ export class Machine {
     this.execute();
   }
 
-  execute() {
+  private execute() {
     // Based on the instruction code in IR execute different instructions
     switch (this.instructionRegister) {
       case 1:
@@ -247,7 +275,7 @@ export class Machine {
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     const divisor = fullWordToBinary(this.memoryBufferRegister);
     if (this.accumulator.value == 0) {
-      throw new Error("Division by error!");
+      throw new Error("Division by 0 error!");
     }
 
     this.multiplyQuotientRegister /= Math.floor(this.accumulator.value / divisor);
