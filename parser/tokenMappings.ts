@@ -22,6 +22,9 @@ export const RSH = generateReferenceTokens("RSH");
 export const STOR_REPLACE_LEFT = generateReferenceTokens("STOR M(1,8:19)");
 export const STOR_REPLACE_RIGHT = generateReferenceTokens("STOR M(1,28:39)");
 
+export const HLT = generateReferenceTokens("HLT");
+
+
 
 // This function is used so convenience to generate the sample token patterns
 function generateReferenceTokens(sampleInstruction: string) {

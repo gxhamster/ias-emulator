@@ -27,7 +27,15 @@ const machine = new Machine();
 // `
 const example_instruction = `LOAD M(0xE3)
 SUB M(229)
+STOR M(231)
+
+LOAD M(230)
+ADD M(229)
+STOR M(230)
+
+LOAD M(231)
 JUMP+ M(228, 20:39)
+HLT
 `;
 // Instructions are always read from right first.
 const scanner = new Scanner(example_instruction);
@@ -37,13 +45,12 @@ const parser = new Parser(tokens);
 parser.parse();
 const instructions = parser.instructions;
 
-machine.memory[227] = new Instruction(0, 100);
+machine.memory[227] = new Instruction(255, 4095, 0, 1000);
 machine.memory[228] = new Instruction(6, 0x1);
 machine.memory[229] = new Instruction(0, 1);
 
-machine.memory[5] = new Instruction(0, 100);
-machine.memory[3] = new Instruction(0, 94);
 machine.loadInstructionsToMemory(instructions);
+
 
 const prompt = ">>> ";
 process.stdout.write(prompt);

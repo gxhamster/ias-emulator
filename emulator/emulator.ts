@@ -1,4 +1,7 @@
 // Main file
+
+import { Opcode } from "./opcodes";
+
 /**
  * Total amount of memory that can be used by the emulator.
  * @constant
@@ -65,9 +68,9 @@ export class Machine {
   public programCounter: number;
   private instructionRegister: number;
   private instructionBufferRegister: Word;
-  // How many clock cycles has passed. Used to increment the PC
   // Program starting address. For now we can just set to 0x0
   private _baseAddress: number;
+  private ticks: number;
 
   memory: Array<Instruction>;
 
@@ -81,6 +84,7 @@ export class Machine {
     this.memory = new Array(MEMORY_LIMIT);
     this._baseAddress = 0x0;
     this.programCounter = this._baseAddress; // Memory goes to 1023 therefore 10 bits PC
+    this.ticks = 0;
 
     for (let i = 0; i < this.memory.length; i++) {
       this.memory[i] = new Instruction(0, 0, 0, 0);
@@ -159,12 +163,11 @@ export class Machine {
     // TODO: We cannot fetch upto number of instructions. We need to
     // repeat fetch/execute cycle until to end of memory or a HALT instruction.
     // Start fetch/excecute cycle
-    // for (let i = 0; i < instructions.length; i++) {
-    //   this.fetch();
-    // }
-    while (this.programCounter < MEMORY_LIMIT) {
+    while (this.programCounter < MEMORY_LIMIT && this.instructionRegister != Opcode.HLT) {
       this.fetch();
+      this.ticks++;
     }
+    console.log(`Ticks: ${this.ticks}`)
   }
 
   /**
@@ -197,6 +200,10 @@ export class Machine {
       if (this.memoryBufferRegister == undefined)
         throw new Error("Memory access returned undefined");
       const { lop, laddr, raddr, rop } = this.memoryBufferRegister;
+
+      if (lop == 0 && laddr == 0 && raddr == 0 && rop == 0)
+        return
+
       if (lop == 0 && laddr == 0) {
         // Only right word is being used
         this.instructionRegister = rop;
@@ -207,12 +214,12 @@ export class Machine {
         this.instructionRegister = lop;
         this.memoryAddressRegister = laddr;
         this.programCounter++;
-      } else {
+      } else  {
         // If two words are utilized in the instruction we need to put the second instruction too
         this.instructionBufferRegister = { op: rop, addr: raddr };
         this.instructionRegister = lop;
         this.memoryAddressRegister = laddr;
-      }
+      }     
     }
     this.execute();
   }
@@ -290,6 +297,9 @@ export class Machine {
       case 33:
         this.store();
         break;
+      case 50:
+        this.halt();
+        break;
       default:
         throw new Error(
           `Unidentified instruction code. Instruction: ${this.instructionRegister} ${this.memoryAddressRegister}`
@@ -363,7 +373,7 @@ export class Machine {
    */
   add() {
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
-    this.accumulator.value += fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.value = this.accumulator.value + fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
@@ -522,6 +532,11 @@ export class Machine {
       this.memoryAddressRegister = jumpAddress;
       this.programCounter = this.memoryAddressRegister;
     }
+  }
+
+  halt() {
+    // Condition already handled in the fetch loop.
+    console.log("Halt instruction reached. Stopping execution.")
   }
 }
 

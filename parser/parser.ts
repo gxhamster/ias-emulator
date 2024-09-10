@@ -7,6 +7,7 @@ import {
   ADD,
   ADD_ABS,
   DIV,
+  HLT,
   JUMP_COND_LEFT,
   JUMP_COND_RIGHT,
   JUMP_LEFT,
@@ -128,13 +129,15 @@ export class Parser {
           this.addInstruction(new Instruction(Opcode.JUMP_LEFT, addr));
         }
       } else if (this.matchTokens(curTokens, JUMP_COND_LEFT)) {
-        const addr = this.getAddressFromInstructionTokens(curTokens);
-        this.addInstruction(
-          new Instruction(Opcode.COND_JUMP_LEFT, 0x0, 0x0, addr)
-        );
-      } else if (this.matchTokens(curTokens, JUMP_COND_RIGHT)) {
-        const addr = this.getAddressFromInstructionTokens(curTokens);
-        this.addInstruction(new Instruction(Opcode.JUMP_RIGHT, addr));
+        if (this.isJumpAddressRight(curTokens)) {
+          const addr = this.getAddressFromInstructionTokens(curTokens);
+          this.addInstruction(new Instruction(Opcode.COND_JUMP_RIGHT, addr));
+        } else {
+          const addr = this.getAddressFromInstructionTokens(curTokens);
+          this.addInstruction(
+            new Instruction(Opcode.COND_JUMP_LEFT, addr)
+          );
+        }
       } else if (this.matchTokens(curTokens, STOR_REPLACE_LEFT)) {
         // Handle the replace address side
         if (this.isAddressHintRight(curTokens)) {
@@ -155,6 +158,8 @@ export class Parser {
       } else if (this.matchTokens(curTokens, STOR_TO_MEMORY)) {
         const addr = this.getAddressFromInstructionTokens(curTokens);
         this.addInstruction(new Instruction(Opcode.STOR, addr));
+      } else if (this.matchTokens(curTokens, HLT)) {
+        this.addInstruction(new Instruction(Opcode.HLT));
       } else {
         throw new Error(
           `Unknown instruction pattern used, Instructions pattern: ${this.displayInstructionTokens(

@@ -10,6 +10,8 @@ export enum TokenType {
   DIV,
   LSH,
   RSH,
+  // Extra opcode tokens
+  HLT,
 
   // Memory and registers
   REGISTER_MQ,
@@ -104,6 +106,9 @@ export class Scanner {
           break;
         case "RSH":
           this.addToken(TokenType.RSH, "RSH");
+          break;
+        case "HLT":
+          this.addToken(TokenType.HLT, "HLT");
           break;
         default:
           throw new Error(
