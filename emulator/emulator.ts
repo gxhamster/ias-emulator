@@ -1,24 +1,40 @@
 // Main file
-export let MEMORY_LIMIT = 1024;
+/**
+ * Total amount of memory that can be used by the emulator.
+ * @constant
+ */
+export const MEMORY_LIMIT = 1024;
 
-// One word is equal to 20 bits. One full instruction is two words in memory
+/**
+ * One word is equal to 20 bits. One full instruction is two words in memory
+ */
 export interface Word {
   op: number;
   addr: number;
 }
 
-// Structure to keep both value in the full word
-// and the individual values in the each location
+/**
+ * Structure to keep both value in the full word
+ * and the individual values in the each location.
+ * @param {number} value Numeric value in accumulator
+ * @param {Instruction} data Full representation
+ */
 export interface Accumulator {
   value: number;
   data: Instruction;
 }
 
+/**
+ * @param lop 8 bits
+ * @param laddr 12 bits
+ * @param rop 8 bits
+ * @param raddr 12 bits
+ */
 export class Instruction {
-  public lop: number; // 8 bits
-  public laddr: number; // 12 bits
-  public rop: number; // 8 bits
-  public raddr: number; // 12 bits
+  public lop: number;
+  public laddr: number;
+  public rop: number;
+  public raddr: number;
 
   constructor(
     rop: number = 0,
@@ -36,6 +52,11 @@ export class Instruction {
   }
 }
 
+/**
+ * @classdesc Contains all the state and registers and memory blocks regarding the
+ * emulator. Instructions are loaded to be executed.
+ * @class
+ */
 export class Machine {
   private accumulator: Accumulator; // FullWord but to do arithmetic
   private multiplyQuotientRegister: number;
@@ -51,7 +72,6 @@ export class Machine {
   memory: Array<Instruction>;
 
   constructor() {
-    // this.accumulator = new FullWord();
     this.accumulator = { value: 0x0, data: new Instruction() };
     this.multiplyQuotientRegister = 0x0;
     this.memoryAddressRegister = 0x0;
@@ -154,6 +174,10 @@ export class Machine {
     this.fetch();
   }
 
+  /**
+   * Fetch cycle of the IAS machine. Fetches instruction at PC
+   * Buffers instructions that are too long to execute.
+   */
   private fetch() {
     if (this.instructionBufferRegister.op > 0) {
       // No need to access memory
@@ -189,6 +213,10 @@ export class Machine {
     this.execute();
   }
 
+  /**
+   * Execute instructions according to the opcode that is in the
+   * IR (instruction register).
+   */
   private execute() {
     // Based on the instruction code in IR execute different instructions
     switch (this.instructionRegister) {
@@ -262,25 +290,32 @@ export class Machine {
     }
   }
 
+  /**
+   * LOAD M(X): Transfer M(X) to the accumulator
+   */
   loadPostiveOffset() {
-    // LOAD M(X)
+    //
     const addrOffset = this._baseAddress + this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * LOAD -M(X): This instruction means that instead of going forward from the base address.
+   * which is the address the PC is intialized to we go backward. Eg: arr[-3]
+   */
   loadNegativeOffset() {
-    // LOAD -M(X): This instruction means that instead of going forward from the base address.
-    // which is the address the PC is intialized to we go backward. Eg: arr[-3]
     const addrOffset = this._baseAddress - this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * LOAD |M(X)|: Transfer absolute value of M(X) to the accumulator
+   */
   loadAbsolute() {
-    // LOAD |M(X)| Transfer absolute value of M(X) to the accumulator
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.accumulator.value = Math.abs(
       fullWordToBinary(this.memoryBufferRegister)
@@ -288,8 +323,10 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * LOAD –|M(X)|: Transfer –|M(X)| to the accumulator
+   */
   loadAbsoluteNegOffset() {
-    // LOAD –|M(X)| Transfer –|M(X)| to the accumulator
     const addrOffset = this._baseAddress - this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = Math.abs(
@@ -298,33 +335,44 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * LOAD MQ,M(X): Transfer contents of memory location X to MQ
+   */
   loadToMQFromMemory() {
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.multiplyQuotientRegister = fullWordToBinary(this.memoryBufferRegister);
   }
 
-  // LOAD MQ: Transfer contents of register MQ to the accumulator AC
+  /**
+   * LOAD MQ: Transfer contents of register MQ to the accumulator AC
+   */
   loadFromMQ() {
     this.accumulator.value = this.multiplyQuotientRegister;
     this.accumulator.data = binaryToWord(this.multiplyQuotientRegister);
   }
 
+  /**
+   * ADD M(X): Add M(X) to AC and put the result in AC
+   */
   add() {
-    // ADD M(X)
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.accumulator.value += fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * SUB M(X): Subtract M(X) from AC and put the result in AC
+   */
   sub() {
-    // SUB M(X)
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.accumulator.value -= fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * ADD |M(X)|: Add the absolute value from M(X) to AC and put the result in AC
+   */
   addAbs() {
-    // ADD |M(X)| Add M(X) to AC; put the result in AC
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.accumulator.value += Math.abs(
       fullWordToBinary(this.memoryBufferRegister)
@@ -332,8 +380,11 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * SUB |M(X)|: Subtract the absolute value from AC and put the remainder in AC
+   */
   subAbs() {
-    // SUB |M(X)| Subtract |M(X)| from AC; put the remainder in AC
+    //
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.accumulator.value -= Math.abs(
       fullWordToBinary(this.memoryBufferRegister)
@@ -341,10 +392,11 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * MUL M(X): Put most significant bits of multiplication result in AC,
+   * put least significant bits in MQ
+   */
   mul() {
-    // MUL M(X): put most significant bits of
-    // result in AC, put least significant bits in MQ
-
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.multiplyQuotientRegister *= fullWordToBinary(
       this.memoryBufferRegister
@@ -356,8 +408,10 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * Divide AC by M(X). Put the quotient in MQ and the remainder in AC
+   */
   div() {
-    // Divide AC by M(X); put the quotient in MQ and the remainder in AC
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     const divisor = fullWordToBinary(this.memoryBufferRegister);
     if (this.accumulator.value == 0) {
@@ -371,60 +425,77 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * LSH shift left the value in AC by 1
+   */
   leftShift() {
-    // LSH shift left the value in AC by 1
     this.accumulator.value = this.accumulator.value << 1;
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * RSH shift right the value in AC by 1
+   */
   rightShift() {
-    // RSH shift right the value in AC by 1
     this.accumulator.value = this.accumulator.value >> 1;
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
+  /**
+   * STOR M(X): Transfer the contents of the accumulator in to the memory location
+   * in `x`
+   */
   store() {
-    // STOR M(X)
     // TODO: Check width and size of the value to store. If cannot fit.
     const storingAddr = this.memoryAddressRegister;
     this.memoryBufferRegister = this.accumulator.data;
     this.memory[storingAddr] = this.memoryBufferRegister;
   }
 
+  /**
+   * `STOR M(X,8:19)`: Replace left address field at `M(X)` by 12 rightmost bits of AC
+   */
   leftAddressModify() {
-    // STOR M(X,8:19) Replace left address field at M(X) by 12 rightmost bits of AC
     const storingAddr = this.memoryAddressRegister;
     this.memoryBufferRegister = this.accumulator.data;
     this.memory[storingAddr].laddr = this.memoryBufferRegister.raddr;
   }
 
+  /**
+   * `STOR M(X,28:39)` Replace right address field at `M(X)` by 12 rightmost bits of AC
+   */
   rightAddressModify() {
-    // STOR M(X,28:39) Replace right address field at M(X) by 12 rightmost bits of AC
     const storingAddr = this.memoryAddressRegister;
     this.memoryBufferRegister = this.accumulator.data;
     this.memory[storingAddr].raddr = this.memoryBufferRegister.raddr;
   }
 
+  /**
+   * `JUMP M(X,0:19)` Take next instruction from left half of M(X).
+   * This means that the jump instruction address is taken from the left half of the word
+   */
   jumpToLeftAddr() {
-    // JUMP M(X,0:19) Take next instruction from left half of M(X)
-    // This means that the jump instruction address is taken from the left half of the word
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     const jumpAddress = this.memoryBufferRegister.laddr;
     this.memoryAddressRegister = jumpAddress;
     this.programCounter = this.memoryAddressRegister;
   }
 
+  /**
+   * `JUMP M(X,20:39)` Take next instruction from right half of `M(X)`
+   */
   jumpToRightAddr() {
-    // JUMP M(X,20:39) Take next instruction from right half of M(X)
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     const jumpAddress = this.memoryBufferRegister.raddr;
     this.memoryAddressRegister = jumpAddress;
     this.programCounter = this.memoryAddressRegister;
   }
 
+  /**
+   * `JUMP+ M(X,0:19)` If number in the accumulator is nonnegative,
+   * take next instruction from left half of `M(X)`
+   */
   conditionalJumpLeftAddr() {
-    // JUMP+ M(X,0:19) If number in the accumulator is nonnegative,
-    // take next instruction from left half of M(X)
     if (this.accumulator.value > -1) {
       this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
       const jumpAddress = this.memoryBufferRegister.laddr;
@@ -433,9 +504,11 @@ export class Machine {
     }
   }
 
+  /**
+   * `JUMP+ M(X,20:39)` If number in the accumulator is nonnegative,
+   * take next instruction from right half of `M(X)`
+   */
   conditionalJumpRightAddr() {
-    // JUMP+ M(X,0:19) If number in the accumulator is nonnegative,
-    // take next instruction from right half of M(X)
     if (this.accumulator.value > -1) {
       this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
       const jumpAddress = this.memoryBufferRegister.raddr;
@@ -445,7 +518,15 @@ export class Machine {
   }
 }
 
-// Combine memory segments to one binary value
+/**
+ * Combine memory segments to one binary value. Used mostly
+ * when for arithmetic with `AC` and `MQ` registers.
+ * @example
+ * new Instruction (1, 5, 0, 0)
+ * // becomes 4101 in base10 or `0x1005`
+ * @param fullWord {Instruction} An full width memory block
+ * @returns {number}
+ */
 function fullWordToBinary(fullWord: Instruction) {
   const n1 = fullWord.lop << 32;
   const n2 = fullWord.laddr << 20;
@@ -455,9 +536,15 @@ function fullWordToBinary(fullWord: Instruction) {
   return result;
 }
 
-// Extract individual segments from binary value
+/**
+ * Extract individual segments from binary value. Does the opposite
+ * @param binary {number} A numeric value
+ * @example
+ * binaryToWord(0x1005)
+ * // returns Instruction(1, 5, 0, 0)
+ * @returns {Instruction} A full-width instruction object
+ */
 function binaryToWord(binary: number) {
-  // 0x1005
   const lop = (binary & 0xff00000000) >> 32;
   const laddr = (binary & 0x00fff00000) >> 20;
   const rop = (binary & 0x00000ff000) >> 12;
