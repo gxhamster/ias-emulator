@@ -120,11 +120,13 @@ export class Parser {
         const addr = this.getAddressFromInstructionTokens(curTokens);
         this.addInstruction(new Instruction(Opcode.DIV, addr));
       } else if (this.matchTokens(curTokens, JUMP_LEFT)) {
-        const addr = this.getAddressFromInstructionTokens(curTokens);
-        this.addInstruction(new Instruction(Opcode.JUMP_LEFT, 0x0, 0x0, addr));
-      } else if (this.matchTokens(curTokens, JUMP_RIGHT)) {
-        const addr = this.getAddressFromInstructionTokens(curTokens);
-        this.addInstruction(new Instruction(Opcode.JUMP_RIGHT, addr));
+        if (this.isJumpAddressRight(curTokens)) {
+          const addr = this.getAddressFromInstructionTokens(curTokens);
+          this.addInstruction(new Instruction(Opcode.JUMP_RIGHT, addr));
+        } else {
+          const addr = this.getAddressFromInstructionTokens(curTokens);
+          this.addInstruction(new Instruction(Opcode.JUMP_LEFT, addr));
+        }
       } else if (this.matchTokens(curTokens, JUMP_COND_LEFT)) {
         const addr = this.getAddressFromInstructionTokens(curTokens);
         this.addInstruction(
@@ -211,6 +213,22 @@ export class Parser {
           return false;
         } else if (
           source[i - 1].lexeme === "28" &&
+          source[i + 1].lexeme === "39"
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  private isJumpAddressRight(source: Token[]) {
+    for (let i = 0; i < source.length; i++) {
+      const curTok = source[i];
+      if (curTok.tokenType === TokenType.COLON) {
+        if (source[i - 1].lexeme === "0" && source[i + 1].lexeme === "19") {
+          return false;
+        } else if (
+          source[i - 1].lexeme === "20" &&
           source[i + 1].lexeme === "39"
         ) {
           return true;

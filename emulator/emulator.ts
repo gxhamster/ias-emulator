@@ -156,8 +156,13 @@ export class Machine {
     for (let i = this._baseAddress, j = 0; j < instructions.length; i++, j++) {
       this.memory[i] = instructions[j];
     }
+    // TODO: We cannot fetch upto number of instructions. We need to
+    // repeat fetch/execute cycle until to end of memory or a HALT instruction.
     // Start fetch/excecute cycle
-    for (let i = 0; i < instructions.length; i++) {
+    // for (let i = 0; i < instructions.length; i++) {
+    //   this.fetch();
+    // }
+    while (this.programCounter < MEMORY_LIMIT) {
       this.fetch();
     }
   }
@@ -209,7 +214,6 @@ export class Machine {
         this.memoryAddressRegister = laddr;
       }
     }
-
     this.execute();
   }
 
@@ -220,6 +224,9 @@ export class Machine {
   private execute() {
     // Based on the instruction code in IR execute different instructions
     switch (this.instructionRegister) {
+      // case 0:
+      //   // This normally means that nothing really happens.
+      //   break;
       case 1:
         this.loadPostiveOffset();
         break;
@@ -285,7 +292,7 @@ export class Machine {
         break;
       default:
         throw new Error(
-          `Unidentified instruction code. Instruction: ${this.instructionRegister}`
+          `Unidentified instruction code. Instruction: ${this.instructionRegister} ${this.memoryAddressRegister}`
         );
     }
   }

@@ -25,10 +25,9 @@ const machine = new Machine();
 // const example_instruction = `LOAD M(5)
 // SUB M(3)
 // `
-const example_instruction = `LOAD MQ, M(0xE3)
-MUL M(0xE3)
-LOAD MQ
-STOR M(0xF3)
+const example_instruction = `LOAD M(0xE3)
+SUB M(229)
+JUMP+ M(228, 20:39)
 `;
 // Instructions are always read from right first.
 const scanner = new Scanner(example_instruction);
@@ -39,6 +38,9 @@ parser.parse();
 const instructions = parser.instructions;
 
 machine.memory[227] = new Instruction(0, 100);
+machine.memory[228] = new Instruction(6, 0x1);
+machine.memory[229] = new Instruction(0, 1);
+
 machine.memory[5] = new Instruction(0, 100);
 machine.memory[3] = new Instruction(0, 94);
 machine.loadInstructionsToMemory(instructions);
@@ -48,26 +50,7 @@ process.stdout.write(prompt);
 for await (const line of console) {
   // console.log(`You typed: ${line}`);
   if (line == "print reg") {
-    // Print contents of registers
-    const {
-      accumulator,
-      memoryAddressRegister,
-      memoryBufferRegister,
-      instructionRegister,
-      instructionBufferRegister,
-      programCounter,
-      multiplyQuotientRegister,
-    } = machine.getRegisterValues();
-
-    const output = `PC  : ${programCounter}
-AC  : ${accumulator}
-MQ  : ${multiplyQuotientRegister}
-MAR : ${memoryAddressRegister}
-MBR : ${memoryBufferRegister.lop} ${memoryBufferRegister.laddr}  ${memoryBufferRegister.rop} ${memoryBufferRegister.raddr}
-IR  : ${instructionRegister}
-IBR : ${instructionBufferRegister.op} ${instructionBufferRegister.addr}`;
-
-    console.log(output);
+    printRegisters();
   } else if (line.includes("print mem")) {
     let lineArr = line.split(" ");
     let lowerBound = DISPLAY_MEMORY_DEFAULT_MIN;
@@ -175,4 +158,27 @@ function parseRange(str: string) {
   }
 
   return { lowerBound, higherBound };
+}
+
+function printRegisters() {
+  // Print contents of registers
+  const {
+    accumulator,
+    memoryAddressRegister,
+    memoryBufferRegister,
+    instructionRegister,
+    instructionBufferRegister,
+    programCounter,
+    multiplyQuotientRegister,
+  } = machine.getRegisterValues();
+
+  const output = `PC  : ${programCounter}
+AC  : ${accumulator}
+MQ  : ${multiplyQuotientRegister}
+MAR : ${memoryAddressRegister}
+MBR : ${memoryBufferRegister.lop} ${memoryBufferRegister.laddr}  ${memoryBufferRegister.rop} ${memoryBufferRegister.raddr}
+IR  : ${instructionRegister}
+IBR : ${instructionBufferRegister.op} ${instructionBufferRegister.addr}`;
+
+  console.log(output);
 }
