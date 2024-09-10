@@ -31,10 +31,10 @@ LOAD MQ
 STOR M(0xF3)
 STOR M(0xF4)
 STOR M(0xF5)
-`
+`;
 // Instructions are always read from right first.
 const scanner = new Scanner(example_instruction);
-scanner.scanTokens()
+scanner.scanTokens();
 const tokens = scanner.tokens;
 const parser = new Parser(tokens);
 parser.parse();
@@ -45,51 +45,59 @@ machine.memory[5] = new Instruction(0, 100);
 machine.memory[3] = new Instruction(0, 94);
 machine.loadInstructionsToMemory(instructions);
 
-
-
 const prompt = ">>> ";
 process.stdout.write(prompt);
 for await (const line of console) {
-    // console.log(`You typed: ${line}`);
-    if (line == "print registers") {
-        // Print contents of registers
-            const { accumulator,
-                memoryAddressRegister,
-                memoryBufferRegister, 
-                instructionRegister, 
-                instructionBufferRegister, 
-                programCounter, 
-                multiplyQuotientRegister 
-            } = machine.getRegisterValues();
+  // console.log(`You typed: ${line}`);
+  if (line == "print registers") {
+    // Print contents of registers
+    const {
+      accumulator,
+      memoryAddressRegister,
+      memoryBufferRegister,
+      instructionRegister,
+      instructionBufferRegister,
+      programCounter,
+      multiplyQuotientRegister,
+    } = machine.getRegisterValues();
 
-            const output = `PC  : ${programCounter}
+    const output = `PC  : ${programCounter}
 AC  : ${accumulator}
 MQ  : ${multiplyQuotientRegister}
 MAR : ${memoryAddressRegister}
 MBR : ${memoryBufferRegister.lop} ${memoryBufferRegister.laddr}  ${memoryBufferRegister.rop} ${memoryBufferRegister.raddr}
 IR  : ${instructionRegister}
-IBR : ${instructionBufferRegister.op} ${instructionBufferRegister.addr}`
-            
-            console.log(output) 
-    } else if (line.includes("print memory")) {
-        let lineArr = line.split(" ");
-        let lowerBound = DISPLAY_MEMORY_DEFAULT_MIN;
-        let higherBound = DISPLAY_MEMORY_DEFAULT_MAX;
-        if (lineArr.length > 2) {
-            const memoryRangeStr = lineArr[2];
-            const tempArr = memoryRangeStr.split(":")
-            if (tempArr.length == 2) {
-                lowerBound = parseInt(tempArr[0]);
-                higherBound = parseInt(tempArr[1]);
-            } else if (tempArr.length == 1) {
-                higherBound = parseInt(tempArr[0]);
-            }
-        }             
-        lowerBound = (!lowerBound) ? DISPLAY_MEMORY_DEFAULT_MIN : lowerBound;
-        higherBound = (!higherBound) ? DISPLAY_MEMORY_DEFAULT_MAX : higherBound;
-        // Call to emulator to get contents of memory
-        console.table(machine.getMemoryByRange(lowerBound, higherBound), );
-    }
+IBR : ${instructionBufferRegister.op} ${instructionBufferRegister.addr}`;
 
-    process.stdout.write(prompt);
+    console.log(output);
+  } else if (line.includes("print memory")) {
+    let lineArr = line.split(" ");
+    let lowerBound = DISPLAY_MEMORY_DEFAULT_MIN;
+    let higherBound = DISPLAY_MEMORY_DEFAULT_MAX;
+    if (lineArr.length > 2) {
+      const memoryRangeStr = lineArr[2];
+      const tempArr = memoryRangeStr.split(":");
+      if (tempArr.length == 2) {
+        lowerBound = parseInt(tempArr[0]);
+        higherBound = parseInt(tempArr[1]);
+      } else if (tempArr.length == 1) {
+        higherBound = parseInt(tempArr[0]);
+      }
+    }
+    lowerBound = !lowerBound ? DISPLAY_MEMORY_DEFAULT_MIN : lowerBound;
+    higherBound = !higherBound ? DISPLAY_MEMORY_DEFAULT_MAX : higherBound;
+    // Call to emulator to get contents of memory
+    console.table(machine.getMemoryByRange(lowerBound, higherBound));
+  } else if (line.startsWith("reset")) {
+    // Clear memory and registers (RESET)
+    if (line.includes("registers")) {
+      machine.resetRegisters();
+      console.log("Cleared register values");
+    } else {
+      machine.resetEmulator();
+      console.log("Cleared register and memory");
+    }
+  }
+
+  process.stdout.write(prompt);
 }

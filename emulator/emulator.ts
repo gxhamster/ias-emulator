@@ -51,13 +51,12 @@ export class Machine {
 
   memory: Array<Instruction>;
 
-
   constructor() {
     // this.accumulator = new FullWord();
-    this.accumulator = { value: 0x0, data: new Instruction() }
+    this.accumulator = { value: 0x0, data: new Instruction() };
     this.multiplyQuotientRegister = 0x0;
     this.memoryAddressRegister = 0x0;
-    this.memoryBufferRegister = new Instruction(0,0,0,0);
+    this.memoryBufferRegister = new Instruction(0, 0, 0, 0);
     this.instructionRegister = 0x0;
     this.instructionBufferRegister = { op: 0, addr: 0 };
     this.memory = new Array(MEMORY_LIMIT);
@@ -66,9 +65,27 @@ export class Machine {
     this.clock = 0;
 
     for (let i = 0; i < this.memory.length; i++) {
-      this.memory[i] = new Instruction(0,0,0,0);
+      this.memory[i] = new Instruction(0, 0, 0, 0);
+    }
+  }
+
+  public resetRegisters() {
+    this.accumulator = { value: 0x0, data: new Instruction() };
+    this.multiplyQuotientRegister = 0x0;
+    this.memoryAddressRegister = 0x0;
+    this.memoryBufferRegister = new Instruction(0, 0, 0, 0);
+    this.instructionRegister = 0x0;
+    this.instructionBufferRegister = { op: 0, addr: 0 };
+    this.baseAddress = 0x0;
+    this.programCounter = this.baseAddress;
+  }
+
+  public resetEmulator() {
+    for (let i = 0; i < this.memory.length; i++) {
+      this.memory[i] = new Instruction(0, 0, 0, 0);
     }
 
+    this.resetRegisters();
   }
 
   public getRegisterValues() {
@@ -79,21 +96,19 @@ export class Machine {
       memoryBufferRegister: this.memoryBufferRegister,
       instructionRegister: this.instructionRegister,
       instructionBufferRegister: this.instructionBufferRegister,
-      programCounter: this.programCounter
-    }
+      programCounter: this.programCounter,
+    };
   }
 
   public getMemoryByRange(lower: number = 0, higher: number) {
-    if (lower > higher)
-      return;
-    if (higher > MEMORY_LIMIT + 1)
-      return
+    if (lower > higher) return;
+    if (higher > MEMORY_LIMIT + 1) return;
 
-    return this.memory.slice(lower, higher+1).map((ins, idx) => {
+    return this.memory.slice(lower, higher + 1).map((ins, idx) => {
       return {
         location: lower + idx,
         ...ins,
-      }
+      };
     });
   }
 
@@ -112,12 +127,10 @@ export class Machine {
       this.memory[i] = instructions[i];
     }
     // Start fetch/excecute cycle
-    for (; this.clock < instructions.length; this.clock++)
-      this.fetch();
+    for (; this.clock < instructions.length; this.clock++) this.fetch();
 
-    console.log("AC:", this.accumulator.value, "PC:",this.programCounter)
+    console.log("AC:", this.accumulator.value, "PC:", this.programCounter);
   }
-
 
   private fetch() {
     if (this.instructionBufferRegister.op > 0) {
@@ -131,7 +144,7 @@ export class Machine {
       // Access memory location at MAR
       this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
       if (this.memoryBufferRegister == undefined)
-        throw new Error("Memory access returned undefined")
+        throw new Error("Memory access returned undefined");
       const { lop, laddr, raddr, rop } = this.memoryBufferRegister;
       if (lop == 0 && laddr == 0) {
         // Only right word is being used
@@ -176,7 +189,7 @@ export class Machine {
         this.loadToMQFromMemory();
         break;
       case 10:
-        this.loadFromMQ()
+        this.loadFromMQ();
         break;
       case 11:
         this.mul();
@@ -212,7 +225,9 @@ export class Machine {
         this.store();
         break;
       default:
-        throw new Error(`Unidentified instruction code. Instruction: ${this.instructionRegister}`)
+        throw new Error(
+          `Unidentified instruction code. Instruction: ${this.instructionRegister}`
+        );
     }
   }
 
@@ -239,7 +254,6 @@ export class Machine {
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     const value = fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
-
   }
 
   loadToMQFromMemory() {
@@ -272,9 +286,13 @@ export class Machine {
     // result in AC, put least significant bits in MQ
 
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
-    this.multiplyQuotientRegister *= fullWordToBinary(this.memoryBufferRegister);
-    this.accumulator.value = (0xFFFFF00000 & this.multiplyQuotientRegister) >> 20;
-    this.multiplyQuotientRegister = 0x00000FFFFF & this.multiplyQuotientRegister;
+    this.multiplyQuotientRegister *= fullWordToBinary(
+      this.memoryBufferRegister
+    );
+    this.accumulator.value =
+      (0xfffff00000 & this.multiplyQuotientRegister) >> 20;
+    this.multiplyQuotientRegister =
+      0x00000fffff & this.multiplyQuotientRegister;
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
@@ -286,7 +304,9 @@ export class Machine {
       throw new Error("Division by 0 error!");
     }
 
-    this.multiplyQuotientRegister /= Math.floor(this.accumulator.value / divisor);
+    this.multiplyQuotientRegister /= Math.floor(
+      this.accumulator.value / divisor
+    );
     this.accumulator.value = this.accumulator.value % divisor;
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
@@ -315,15 +335,14 @@ export class Machine {
     // STOR M(X,8:19) Replace left address field at M(X) by 12 rightmost bits of AC
     const storingAddr = this.memoryAddressRegister;
     this.memoryBufferRegister = this.accumulator.data;
-    this.memory[storingAddr].laddr = this.memoryBufferRegister.raddr
-
+    this.memory[storingAddr].laddr = this.memoryBufferRegister.raddr;
   }
 
   rightAddressModify() {
     // STOR M(X,28:39) Replace right address field at M(X) by 12 rightmost bits of AC
     const storingAddr = this.memoryAddressRegister;
     this.memoryBufferRegister = this.accumulator.data;
-    this.memory[storingAddr].raddr = this.memoryBufferRegister.raddr
+    this.memory[storingAddr].raddr = this.memoryBufferRegister.raddr;
   }
 
   jumpToLeftAddr() {
@@ -366,12 +385,11 @@ export class Machine {
   }
 }
 
-
 // Combine memory segments to one binary value
 function fullWordToBinary(fullWord: Instruction) {
   const n1 = fullWord.lop << 32;
   const n2 = fullWord.laddr << 20;
-  const n3 = fullWord.rop << 12
+  const n3 = fullWord.rop << 12;
   const result = n1 | n2 | n3 | fullWord.raddr;
 
   return result;
@@ -380,10 +398,9 @@ function fullWordToBinary(fullWord: Instruction) {
 // Extract individual segments from binary value
 function binaryToWord(binary: number) {
   // 0x1005
-  const lop = (binary & 0xFF00000000) >> 32;
-  const laddr = (binary & 0x00FFF00000) >> 20;
-  const rop = (binary & 0x00000FF000) >> 12;
-  const raddr = binary & 0x0000000FFF;
+  const lop = (binary & 0xff00000000) >> 32;
+  const laddr = (binary & 0x00fff00000) >> 20;
+  const rop = (binary & 0x00000ff000) >> 12;
+  const raddr = binary & 0x0000000fff;
   return new Instruction(rop, raddr, lop, laddr);
 }
-
