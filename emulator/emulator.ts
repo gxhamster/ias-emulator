@@ -201,11 +201,20 @@ export class Machine {
       case 3:
         this.loadAbsolute();
         break;
+      case 4:
+        this.loadAbsoluteNegOffset();
+        break;
       case 5:
         this.add();
         break;
       case 6:
         this.sub();
+        break;
+      case 7:
+        this.addAbs();
+        break;
+      case 8:
+        this.subAbs();
         break;
       case 9:
         this.loadToMQFromMemory();
@@ -270,11 +279,22 @@ export class Machine {
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
-  // TODO: Need to check whether 2s complement
   loadAbsolute() {
-    // LOAD |M(X)|
+    // LOAD |M(X)| Transfer absolute value of M(X) to the accumulator
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
-    const value = fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.value = Math.abs(
+      fullWordToBinary(this.memoryBufferRegister)
+    );
+    this.accumulator.data = binaryToWord(this.accumulator.value);
+  }
+
+  loadAbsoluteNegOffset() {
+    // LOAD –|M(X)| Transfer –|M(X)| to the accumulator
+    const addrOffset = this._baseAddress - this.memoryAddressRegister;
+    this.memoryBufferRegister = this.memory[addrOffset];
+    this.accumulator.value = Math.abs(
+      fullWordToBinary(this.memoryBufferRegister)
+    );
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
@@ -300,6 +320,24 @@ export class Machine {
     // SUB M(X)
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
     this.accumulator.value -= fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.data = binaryToWord(this.accumulator.value);
+  }
+
+  addAbs() {
+    // ADD |M(X)| Add M(X) to AC; put the result in AC
+    this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
+    this.accumulator.value += Math.abs(
+      fullWordToBinary(this.memoryBufferRegister)
+    );
+    this.accumulator.data = binaryToWord(this.accumulator.value);
+  }
+
+  subAbs() {
+    // SUB |M(X)| Subtract |M(X)| from AC; put the remainder in AC
+    this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
+    this.accumulator.value -= Math.abs(
+      fullWordToBinary(this.memoryBufferRegister)
+    );
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 

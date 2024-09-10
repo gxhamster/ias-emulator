@@ -5,6 +5,7 @@ import { Opcode } from "../emulator/opcodes";
 import { TokenType, type Token } from "./lexer";
 import {
   ADD,
+  ADD_ABS,
   DIV,
   JUMP_COND_LEFT,
   JUMP_COND_RIGHT,
@@ -23,6 +24,7 @@ import {
   STOR_REPLACE_RIGHT,
   STOR_TO_MEMORY,
   SUB,
+  SUB_ABS,
 } from "./tokenMappings";
 
 // Scanner class and maps them to actual instructions
@@ -93,14 +95,19 @@ export class Parser {
         this.addInstruction(new Instruction(Opcode.LOAD_ABS, addr));
       } else if (this.matchTokens(curTokens, LOAD_FROM_MEMORY_ABS_NEG_OFF)) {
         const addr = this.getAddressFromInstructionTokens(curTokens);
-        // this.addInstruction(new Instruction(Opcode.LOAD, addr))
-        throw new Error("Not implemented instruction!");
+        this.addInstruction(new Instruction(Opcode.LOAD_ABS_NEG, addr));
       } else if (this.matchTokens(curTokens, ADD)) {
         const addr = this.getAddressFromInstructionTokens(curTokens);
         this.addInstruction(new Instruction(Opcode.ADD, addr));
       } else if (this.matchTokens(curTokens, SUB)) {
         const addr = this.getAddressFromInstructionTokens(curTokens);
         this.addInstruction(new Instruction(Opcode.SUB, addr));
+      } else if (this.matchTokens(curTokens, ADD_ABS)) {
+        const addr = this.getAddressFromInstructionTokens(curTokens);
+        this.addInstruction(new Instruction(Opcode.ADD_ABS, addr));
+      } else if (this.matchTokens(curTokens, SUB_ABS)) {
+        const addr = this.getAddressFromInstructionTokens(curTokens);
+        this.addInstruction(new Instruction(Opcode.SUB_ABS, addr));
       } else if (this.matchTokens(curTokens, LOAD_TO_MQ)) {
         const addr = this.getAddressFromInstructionTokens(curTokens);
         this.addInstruction(new Instruction(Opcode.LOAD_TO_MQ, addr));

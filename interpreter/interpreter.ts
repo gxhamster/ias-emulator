@@ -29,8 +29,6 @@ const example_instruction = `LOAD MQ, M(0xE3)
 MUL M(0xE3)
 LOAD MQ
 STOR M(0xF3)
-STOR M(0xF4)
-STOR M(0xF5)
 `;
 // Instructions are always read from right first.
 const scanner = new Scanner(example_instruction);
