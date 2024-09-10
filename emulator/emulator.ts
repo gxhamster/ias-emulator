@@ -41,13 +41,12 @@ export class Machine {
   private multiplyQuotientRegister: number;
   private memoryAddressRegister: number;
   private memoryBufferRegister: Instruction;
-  private programCounter: number;
+  public programCounter: number;
   private instructionRegister: number;
   private instructionBufferRegister: Word;
   // How many clock cycles has passed. Used to increment the PC
-  private clock: number;
   // Program starting address. For now we can just set to 0x0
-  private baseAddress: number;
+  private _baseAddress: number;
 
   memory: Array<Instruction>;
 
@@ -60,13 +59,27 @@ export class Machine {
     this.instructionRegister = 0x0;
     this.instructionBufferRegister = { op: 0, addr: 0 };
     this.memory = new Array(MEMORY_LIMIT);
-    this.baseAddress = 0x0;
-    this.programCounter = this.baseAddress; // Memory goes to 1023 therefore 10 bits PC
-    this.clock = 0;
+    this._baseAddress = 0x0;
+    this.programCounter = this._baseAddress; // Memory goes to 1023 therefore 10 bits PC
 
     for (let i = 0; i < this.memory.length; i++) {
       this.memory[i] = new Instruction(0, 0, 0, 0);
     }
+  }
+
+  set baseAddress(newAddress: number) {
+    if (newAddress > MEMORY_LIMIT) {
+      console.log(
+        `Program address will exceed MEMORY_LIMIT. Address: ${newAddress}`
+      );
+      return;
+    }
+    this._baseAddress = newAddress;
+    this.programCounter = this._baseAddress;
+  }
+
+  get baseAddress() {
+    return this._baseAddress;
   }
 
   public resetRegisters() {
@@ -76,8 +89,8 @@ export class Machine {
     this.memoryBufferRegister = new Instruction(0, 0, 0, 0);
     this.instructionRegister = 0x0;
     this.instructionBufferRegister = { op: 0, addr: 0 };
-    this.baseAddress = 0x0;
-    this.programCounter = this.baseAddress;
+    this._baseAddress = 0x0;
+    this.programCounter = this._baseAddress;
   }
 
   public resetEmulator() {
@@ -112,24 +125,33 @@ export class Machine {
     });
   }
 
-  public showAccumulator() {
-    console.log("[Accumulator]:" + this.accumulator);
-  }
-
-  public showMultiplyQuotientRegister() {
-    console.log("[MQ]:" + this.multiplyQuotientRegister);
-  }
-
-  // Start reading instructions
+  /**
+   * Start reading instructions. Use this to load complete programs.
+   * Can specify memory offset to load the program by setting the base
+   * address.
+   * @param {Array<Instruction>} instructions Instructions to load
+   */
   public loadInstructionsToMemory(instructions: Array<Instruction>) {
     // Copy all the instructions to memory. Start from the base address
-    for (let i = this.baseAddress; i < instructions.length; i++) {
-      this.memory[i] = instructions[i];
+    for (let i = this._baseAddress, j = 0; j < instructions.length; i++, j++) {
+      this.memory[i] = instructions[j];
     }
     // Start fetch/excecute cycle
-    for (; this.clock < instructions.length; this.clock++) this.fetch();
+    for (let i = 0; i < instructions.length; i++) {
+      this.fetch();
+    }
+  }
 
-    console.log("AC:", this.accumulator.value, "PC:", this.programCounter);
+  /**
+   * Used for reading instructions from the REPL instruction
+   * by instruction. The instruction is loaded into the current
+   * program counter address
+   * @param {Instruction} instruction Instruction to load
+   */
+  public loadInstructionREPL(instruction: Instruction) {
+    this.memory[this.programCounter] = instruction;
+
+    this.fetch();
   }
 
   private fetch() {
@@ -233,7 +255,7 @@ export class Machine {
 
   loadPostiveOffset() {
     // LOAD M(X)
-    const addrOffset = this.baseAddress + this.memoryAddressRegister;
+    const addrOffset = this._baseAddress + this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
@@ -242,7 +264,7 @@ export class Machine {
   loadNegativeOffset() {
     // LOAD -M(X): This instruction means that instead of going forward from the base address.
     // which is the address the PC is intialized to we go backward. Eg: arr[-3]
-    const addrOffset = this.baseAddress - this.memoryAddressRegister;
+    const addrOffset = this._baseAddress - this.memoryAddressRegister;
     this.memoryBufferRegister = this.memory[addrOffset];
     this.accumulator.value = fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
