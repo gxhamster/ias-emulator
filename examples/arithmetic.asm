@@ -1,0 +1,14 @@
+// Y = (A-B) / (C+D*E)
+LOAD MQ, M(18)
+MUL M(19)
+LOAD MQ
+ADD M(17)
+STOR M(20)
+
+LOAD M(15)
+SUB M(16)
+DIV M(20)
+LOAD MQ
+STOR M(20)
+LOAD M(20)
+HLT
