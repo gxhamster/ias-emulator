@@ -163,11 +163,14 @@ export class Machine {
     // TODO: We cannot fetch upto number of instructions. We need to
     // repeat fetch/execute cycle until to end of memory or a HALT instruction.
     // Start fetch/excecute cycle
-    while (this.programCounter < MEMORY_LIMIT && this.instructionRegister != Opcode.HLT) {
+    while (
+      this.programCounter < MEMORY_LIMIT &&
+      this.instructionRegister != Opcode.HLT
+    ) {
       this.fetch();
       this.ticks++;
     }
-    console.log(`Ticks: ${this.ticks}`)
+    console.log(`Ticks: ${this.ticks}`);
   }
 
   /**
@@ -202,7 +205,7 @@ export class Machine {
       const { lop, laddr, raddr, rop } = this.memoryBufferRegister;
 
       if (lop == 0 && laddr == 0 && raddr == 0 && rop == 0)
-        return
+        this.programCounter++;
 
       if (lop == 0 && laddr == 0) {
         // Only right word is being used
@@ -214,12 +217,12 @@ export class Machine {
         this.instructionRegister = lop;
         this.memoryAddressRegister = laddr;
         this.programCounter++;
-      } else  {
+      } else {
         // If two words are utilized in the instruction we need to put the second instruction too
         this.instructionBufferRegister = { op: rop, addr: raddr };
         this.instructionRegister = lop;
         this.memoryAddressRegister = laddr;
-      }     
+      }
     }
     this.execute();
   }
@@ -300,6 +303,9 @@ export class Machine {
       case 50:
         this.halt();
         break;
+      case 51:
+        this.storeImmediate();
+        break;
       default:
         throw new Error(
           `Unidentified instruction code. Instruction: ${this.instructionRegister} ${this.memoryAddressRegister}`
@@ -373,7 +379,8 @@ export class Machine {
    */
   add() {
     this.memoryBufferRegister = this.memory[this.memoryAddressRegister];
-    this.accumulator.value = this.accumulator.value + fullWordToBinary(this.memoryBufferRegister);
+    this.accumulator.value =
+      this.accumulator.value + fullWordToBinary(this.memoryBufferRegister);
     this.accumulator.data = binaryToWord(this.accumulator.value);
   }
 
@@ -536,7 +543,25 @@ export class Machine {
 
   halt() {
     // Condition already handled in the fetch loop.
-    console.log("Halt instruction reached. Stopping execution.")
+    console.log("Halt instruction reached. Stopping execution.");
+  }
+
+  /**
+   * An extra instruction used in the emulator for convenience. Allows to set a immediate
+   * value to memory. The immediate value will be in the right address and the memory location should be in
+   * the left address of the instruction.
+   * @example
+   * `|opcode|memory-location|0x0|immediate|`
+   * `STORI M(X), 5` //This will store the value 5 in the memory location in `M(X)`
+   */
+  storeImmediate() {
+    // rop and raddr will be in the IBR (we need to reset after this instruction otherwise it will call with opcode 0x0)
+    // lop and laddr will be in the IR and MAR
+    const immValue = this.instructionBufferRegister.addr;
+    const memLocation = this.memoryAddressRegister;
+    this.memory[memLocation] = binaryToWord(immValue);
+    this.instructionBufferRegister = { op: 0x0, addr: 0x0 };
+    this.programCounter++;
   }
 }
 

@@ -24,6 +24,7 @@ import {
   STOR_REPLACE_LEFT,
   STOR_REPLACE_RIGHT,
   STOR_TO_MEMORY,
+  STORI,
   SUB,
   SUB_ABS,
 } from "./tokenMappings";
@@ -134,9 +135,7 @@ export class Parser {
           this.addInstruction(new Instruction(Opcode.COND_JUMP_RIGHT, addr));
         } else {
           const addr = this.getAddressFromInstructionTokens(curTokens);
-          this.addInstruction(
-            new Instruction(Opcode.COND_JUMP_LEFT, addr)
-          );
+          this.addInstruction(new Instruction(Opcode.COND_JUMP_LEFT, addr));
         }
       } else if (this.matchTokens(curTokens, STOR_REPLACE_LEFT)) {
         // Handle the replace address side
@@ -160,6 +159,18 @@ export class Parser {
         this.addInstruction(new Instruction(Opcode.STOR, addr));
       } else if (this.matchTokens(curTokens, HLT)) {
         this.addInstruction(new Instruction(Opcode.HLT));
+      } else if (this.matchTokens(curTokens, STORI)) {
+        const addr = this.getAddressFromInstructionTokens(curTokens);
+        const immValue = this.getImmediateValue(curTokens);
+        if (immValue !== null) {
+          this.addInstruction(
+            new Instruction(0x0, immValue, Opcode.STORI, addr)
+          );
+        } else {
+          throw new Error(
+            `Store immediate instruction parse failed. Invalid imm value. Value: ${immValue}`
+          );
+        }
       } else {
         throw new Error(
           `Unknown instruction pattern used, Instructions pattern: ${this.displayInstructionTokens(
@@ -240,5 +251,26 @@ export class Parser {
         }
       }
     }
+  }
+
+  // Only used to get immediate value in STORI instruction
+  private getImmediateValue(source: Token[]) {
+    for (let i = 0; i < source.length; i++) {
+      const curTok = source[i];
+      if (
+        curTok.tokenType == TokenType.MEMORY_ADDRESS_DEC &&
+        source[i - 1].tokenType == TokenType.COMMA
+      ) {
+        const value = parseInt(curTok.lexeme);
+        if (Number.isNaN(value)) {
+          throw new Error(
+            `Could not convert to a valid immediate number. Number: ${curTok.lexeme}`
+          );
+        }
+        return value;
+      }
+    }
+
+    return null;
   }
 }
