@@ -12,6 +12,7 @@ export enum TokenType {
   RSH,
   // Extra opcode tokens
   HLT,
+  STORI,
 
   // Memory and registers
   REGISTER_MQ,
@@ -109,6 +110,9 @@ export class Scanner {
           break;
         case "HLT":
           this.addToken(TokenType.HLT, "HLT");
+          break;
+        case "STORI":
+          this.addToken(TokenType.STORI, "STORI");
           break;
         default:
           throw new Error(

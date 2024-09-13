@@ -2,6 +2,7 @@ debugger
 // A way to load programs into the emulator and interact
 // and view the contents in the emulator
 
+import { parseArgs } from "util";
 import { Instruction, Machine } from "../emulator/emulator";
 import { Scanner } from "../parser/lexer";
 import { Parser } from "../parser/parser";
@@ -19,35 +20,37 @@ const DISPLAY_MEMORY_DEFAULT_MAX = 15;
 const DISPLAY_ADDRESS_HEX = false;
 
 const machine = new Machine();
-// const example_instruction = `LOAD M(5)
-// SUB M(3)
-// `
-const example_instruction = `LOAD M(0xE3)
-SUB M(229)
-STOR M(231)
-
-LOAD M(230)
-ADD M(229)
-STOR M(230)
-
-LOAD M(231)
-JUMP+ M(228, 20:39)
+const example_instruction1 = `
+STORI M(5), 6
+STORI M(6), 7
+LOAD M(5)
+ADD M(6)
 HLT
 `;
+
 // Instructions are always read from right first.
-const scanner = new Scanner(example_instruction);
+const scanner = new Scanner(example_instruction1);
 scanner.scanTokens();
 const tokens = scanner.tokens;
 const parser = new Parser(tokens);
 parser.parse();
 const instructions = parser.instructions;
 
-machine.memory[227] = new Instruction(255, 4095, 0, 1000);
-machine.memory[228] = new Instruction(6, 0x1);
-machine.memory[229] = new Instruction(0, 1);
-
 machine.loadInstructionsToMemory(instructions);
 
+// Parse commandline arugments
+const { values, positionals } = parseArgs({
+  args: Bun.argv,
+  options: {
+    file: {
+      type: "string",
+    },
+  },
+  strict: true,
+  allowPositionals: true,
+});
+
+console.log(values);
 
 const prompt = ">>> ";
 process.stdout.write(prompt);

@@ -29,5 +29,6 @@ export enum Opcode {
 
   STOR = 33,
   // Extra opcodes for convenience
-  HLT = 50
+  HLT = 50,
+  STORI = 51,
 }
