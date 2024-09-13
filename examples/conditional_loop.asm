@@ -1,4 +1,10 @@
-LOAD M(0xE3)
+// Set the values in memory
+STORI M(227), 4000
+STORI M(230), 1
+STORI M(229), 1
+STORI M(228), 5
+
+LOAD M(227)
 SUB M(229)
 STOR M(231)
 
