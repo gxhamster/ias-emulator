@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "Debug Bun",
       // The path to a JavaScript or TypeScript file to run.
-      "program": "index.ts",
+      "program": "${file}",
       // The arguments to pass to the program, if any.
       "args": [],
       // The working directory of the program.
@@ -27,9 +27,9 @@
       "runtime": "bun",
       // The arguments to pass to the `bun` executable, if any.
       // Unlike `args`, these are passed to the executable itself, not the program.
-      "runtimeArgs": [
-        "--inspect=ws://localhost:6499/77me1nrm1g6"
-      ],
+      // "runtimeArgs": [
+      //   "--inspect-brk=ws://localhost:6499/77me1nrm1g6"
+      // ],
     },
     {
       "type": "bun",

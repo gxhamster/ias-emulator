@@ -1,3 +1,4 @@
+debugger
 // A way to load programs into the emulator and interact
 // and view the contents in the emulator
 
@@ -9,11 +10,7 @@ import { Parser } from "../parser/parser";
     1. Read commands from the user
     2. Have helper commands to display details about instructions
     3. Command to load programs into machine
-    4. View contents of register
-    5. View contents of memory. Ways to see segments of memory
-    6. Set values in the memory
     7. Interactive program running. Step-by-step
-    8. Clear memory and registers (Reset machine)
 */
 
 const DISPLAY_MEMORY_DEFAULT_MIN = 0;
