@@ -34,8 +34,9 @@ export class Parser {
   private _totalTokens: Array<Array<Token>> = new Array();
   public instructions: Array<Instruction> = new Array();
 
-  constructor(tokens: Token[]) {
-    this.readTokens(tokens);
+  constructor(tokens?: Token[]) {
+    if (tokens)
+      this.readTokens(tokens);
   }
 
   public readTokens(tokens: Token[]) {

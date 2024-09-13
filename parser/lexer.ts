@@ -43,9 +43,11 @@ export class Scanner {
   private lines: Array<string> = new Array();
   private line: number = 0;
 
-  constructor(source: string) {
-    this._source = source;
-    this.splitCodeTolines();
+  constructor(source?: string) {
+    if (source) {
+      this._source = source;
+      this.splitCodeTolines();
+    }
   }
 
   set source(newSource: string) {
@@ -72,6 +74,14 @@ export class Scanner {
       console.error("Cannot scan an empty source!");
       return;
     }
+
+    // Ignore and remove the comment lines
+    for (let i = 0; i < this.lines.length; i++) {
+      if (this.lines[i].startsWith("//")) {
+        this.lines[i] = ""
+      }
+    }
+    this.lines = this.lines.filter((line) => line.length > 0);
 
     while (this.line < this.lines.length) {
       const splitStr = this.lines[this.line].split(" ");
